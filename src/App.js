@@ -9,6 +9,10 @@ import VerifyEmailPage from './components/VerifyEmailPage';
 import Verify2FAPage from './components/Verify2FAPage';
 import ProfilePage from './components/ProfilePage';
 
+// Import react-toastify
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 // Base URL for the backend
 const BASE_URL = 'https://backend-clone-amazon-security.onrender.com/api/auth';
 
@@ -23,7 +27,6 @@ const App = () => {
     ruc: '',
     phone: ''
   });
-  const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
 
   // Handle input changes
@@ -31,12 +34,15 @@ const App = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Set message and clear it after 3 seconds
-  const showMessage = (msg) => {
-    setMessage(msg);
-    setTimeout(() => {
-      setMessage('');
-    }, 3000);
+  // Show message using toastify
+  const showMessage = (msg, type = 'info') => {
+    if (type === 'error') {
+      toast.error(msg);
+    } else if (type === 'success') {
+      toast.success(msg);
+    } else {
+      toast(msg);
+    }
   };
 
   // Register User
@@ -48,10 +54,10 @@ const App = () => {
         email: formData.email,
         password: formData.password
       });
-      showMessage(response.data.msg);
+      showMessage(response.data.msg, 'success');
       setView('verifyEmail');
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error en el registro');
+      showMessage(error.response?.data?.msg || 'Error en el registro', 'error');
     }
   };
 
@@ -63,10 +69,10 @@ const App = () => {
         email: formData.email,
         code: formData.code
       });
-      showMessage(response.data.msg);
+      showMessage(response.data.msg, 'success');
       setView('login');
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error en verificación');
+      showMessage(error.response?.data?.msg || 'Error en verificación', 'error');
     }
   };
 
@@ -78,7 +84,7 @@ const App = () => {
         email: formData.email,
         password: formData.password
       });
-      
+
       // Check if 2FA is required
       if (response.data.msg === 'Verificación de doble factor enviada') {
         setView('verify2FA');
@@ -91,7 +97,7 @@ const App = () => {
       setView('profile');
       fetchProfile();
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error en inicio de sesión');
+      showMessage(error.response?.data?.msg || 'Error en inicio de sesión', 'error');
     }
   };
 
@@ -108,7 +114,7 @@ const App = () => {
       setView('profile');
       fetchProfile();
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error en verificación 2FA');
+      showMessage(error.response?.data?.msg || 'Error en verificación 2FA', 'error');
     }
   };
 
@@ -136,7 +142,7 @@ const App = () => {
         phone: response.data.phone || ''
       }));
     } catch (error) {
-      showMessage('Error al obtener perfil');
+      showMessage('Error al obtener perfil', 'error');
       setView('login');
     }
   };
@@ -159,10 +165,10 @@ const App = () => {
         }
       );
 
-      showMessage(response.data.msg);
+      showMessage(response.data.msg, 'success');
       fetchProfile(); // Refresh profile to get updated 2FA status
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error al cambiar 2FA');
+      showMessage(error.response?.data?.msg || 'Error al cambiar 2FA', 'error');
     }
   };
 
@@ -185,10 +191,10 @@ const App = () => {
         }
       );
 
-      showMessage(response.data.msg);
+      showMessage(response.data.msg, 'success');
       fetchProfile(); // Refresh profile after update
     } catch (error) {
-      showMessage(error.response?.data?.msg || 'Error al actualizar perfil');
+      showMessage(error.response?.data?.msg || 'Error al actualizar perfil', 'error');
     }
   };
 
@@ -235,6 +241,7 @@ const App = () => {
           <RegisterPage 
             {...commonProps} 
             onLoginClick={() => setView('login')} 
+            handleRegister={handleRegister}
           />
         );
       case 'login':
@@ -277,18 +284,9 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="w-full max-w-md">
-        {message && (
-          <div className={`
-            ${message.includes('Error') 
-              ? 'bg-red-100 border-red-400 text-red-700' 
-              : 'bg-green-100 border-green-400 text-green-700'
-            } 
-            px-4 py-3 rounded relative mb-4
-          `}>
-            {message}
-          </div>
-        )}
         {renderView()}
+        {/* Toast container for showing the notifications */}
+        <ToastContainer />
       </div>
     </div>
   );

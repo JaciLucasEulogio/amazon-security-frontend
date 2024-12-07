@@ -152,7 +152,7 @@ const LoginPage = ({ formData, handleChange, handleLogin, onRegisterClick }) => 
       </div>
       <div className="mt-4 text-center text-sm">
         ¿Eres nuevo en Amazon?{" "}
-        <a href="#" className="text-blue-600 hover:underline font-bold">
+        <a onClick={onRegisterClick} href="#" className="text-blue-600 hover:underline font-bold">
           Crea tu cuenta de Amazon
         </a>
       </div>

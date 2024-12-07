@@ -880,3 +880,229 @@ const AppWithAuth = () => (
 
 export default AppWithAuth;
 export default LoginPage;
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState } from 'react'; 
+import ReCAPTCHA from 'react-google-recaptcha';
+
+const RegisterPage = ({ formData, handleChange, handleRegister, onLoginClick }) => {
+  const [errors, setErrors] = useState({});
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+
+  const existingEmails = ['test@domain.com', 'user@domain.com']; // Ejemplo de emails existentes para la validación de existencia
+
+  const validate = (field, value) => {
+    const newErrors = { ...errors };
+
+    switch (field) {
+      case 'name':
+        // Verificar si el nombre está vacío
+        newErrors.name = !value.trim() ? 'El nombre es obligatorio.' : '';
+
+        // Verificar si el nombre contiene números
+        if (/\d/.test(value)) {
+          newErrors.name = 'El nombre no puede contener números.';
+        }
+        break;
+      case 'email':
+        if (!value.trim()) {
+          newErrors.email = 'El correo electrónico es obligatorio.';
+        } else {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          newErrors.email = !emailRegex.test(value) ? 'El correo electrónico no es válido.' : '';
+          if (existingEmails.includes(value)) {
+            newErrors.email = 'Este correo electrónico ya está registrado.';
+          }
+        }
+        break;
+
+      case 'password':
+        newErrors.password = value.trim().length < 6 ? 'La contraseña debe tener al menos seis caracteres.' : '';
+        break;
+
+      case 'confirmPassword':
+        newErrors.confirmPassword = value !== formData.password ? 'Las contraseñas no coinciden.' : '';
+        break;
+
+      case 'phone':
+        newErrors.phone = value && !/^\d{10}$/.test(value) ? 'El número de teléfono debe tener 10 dígitos.' : '';
+        break;
+
+      case 'age':
+        newErrors.age = value && (value < 18 || value > 120) ? 'La edad debe estar entre 18 y 120 años.' : '';
+        break;
+
+      case 'username':
+        newErrors.username = value && /[^a-zA-Z0-9]/.test(value) ? 'El nombre de usuario solo puede contener letras y números.' : '';
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(newErrors);
+
+    // Si hay errores, mostrar el CAPTCHA
+    if (Object.values(newErrors).some((error) => error !== '')) {
+      setShowCaptcha(true);
+    }
+  };
+
+  const handleChangeWithValidation = (e) => {
+    const { name, value } = e.target;
+    handleChange(e); // Llamada a la función externa para manejar el estado del formulario
+    validate(name, value); // Realizar validación en tiempo real
+  };
+
+  const handleCaptcha = (value) => {
+    if (value) {
+      setCaptchaVerified(true);
+      setShowAlert(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (Object.values(errors).every((err) => err === '')) {
+      if (!captchaVerified) {
+        setShowAlert(true);
+        return;
+      }
+      handleRegister(e);
+    } else {
+      setShowAlert(true);
+    }
+  };
+
+  return (
+    <div className="container mx-auto">
+      {showAlert && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong className="font-bold">Se produjo un problema:</strong>
+          <span className="block sm:inline">
+            Resuelve el captcha para continuar.
+          </span>
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+      >
+        <h2 className="text-2xl mb-4 text-center">Crear cuenta</h2>
+
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+          Tu nombre
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Nombre"
+          value={formData.name}
+          onChange={handleChangeWithValidation}
+          className={`shadow appearance-none border ${errors.name ? 'border-red-500' : ''} rounded w-full py-2 px-3 mb-4`}
+          required
+        />
+        {errors.name && <p className="text-red-500 text-xs italic">{errors.name}</p>}
+
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+          Correo electrónico
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Correo Electrónico"
+          value={formData.email}
+          onChange={handleChangeWithValidation}
+          className={`shadow appearance-none border ${errors.email ? 'border-red-500' : ''} rounded w-full py-2 px-3 mb-4`}
+          required
+        />
+        {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
+
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+          Contraseña
+        </label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Contraseña"
+          value={formData.password}
+          onChange={handleChangeWithValidation}
+          className={`shadow appearance-none border ${errors.password ? 'border-red-500' : ''} rounded w-full py-2 px-3 mb-1`}
+          required
+        />
+        {errors.password && (
+          <p className="text-red-500 text-xs italic">{errors.password}</p>
+        )}
+        <p className="text-xs text-gray-600 mb-4">
+          La contraseña debe contener al menos seis caracteres.
+        </p>
+
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
+          Vuelve a escribir la contraseña
+        </label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          placeholder="Vuelve a escribir la contraseña"
+          value={formData.confirmPassword}
+          onChange={handleChangeWithValidation}
+          className={`shadow appearance-none border ${errors.confirmPassword ? 'border-red-500' : ''} rounded w-full py-2 px-3 mb-4`}
+          required
+        />
+        {errors.confirmPassword && (
+          <p className="text-red-500 text-xs italic">{errors.confirmPassword}</p>
+        )}
+
+        {showCaptcha && !captchaVerified && (
+          <div className="flex justify-center mt-4">
+            <ReCAPTCHA
+              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+              onChange={handleCaptcha}
+            />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+        >
+          Crear cuenta
+        </button>
+
+        <p className="text-xs text-gray-600 mt-4 text-center">
+          Al crear una cuenta, aceptas las{' '}
+          <span className="text-blue-500 cursor-pointer">condiciones de uso</span> y el{' '}
+          <span className="text-blue-500 cursor-pointer">aviso de privacidad</span> de Amazon.com.
+        </p>
+
+        <p className="text-center mt-6">
+          ¿Ya tienes una cuenta?{' '}
+          <span
+            onClick={onLoginClick}
+            className="text-blue-500 cursor-pointer ml-1"
+          >
+            Iniciar Sesión &gt;
+          </span>
+        </p>
+      </form>
+    </div>
+  );
+};
+
+export default RegisterPage;
